@@ -1,0 +1,265 @@
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-family: sans-serif;
+  }
+  
+  .board {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #ccc;
+  }
+  
+  .board-row {
+    display: flex;
+  }
+  
+  .cell {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .delivery {
+    background-color: rgb(255, 255, 255);
+  }
+  
+  .red {
+    background-color: red;
+  }
+  
+  .blue {
+    background-color: blue;
+  }
+  
+  .green {
+    background-color: green;
+  }
+  
+  .yellow {
+    background-color: rgb(255, 162, 23);
+  }
+
+  .purple {
+    background-color: purple;
+  }
+  .orange {
+    background-color: orange;
+  }
+  .pink {
+    background-color: pink;
+  }
+  .brown {
+    background-color: brown;
+  }
+  
+  .controls {
+    margin-top: 1rem;
+  }
+  
+  .team-controls {
+    margin-bottom: 0.5rem;
+  }
+  
+  .team-label {
+    font-weight: bold;
+    margin-right: 10px;
+    text-transform: capitalize;
+  }
+  
+  .move-buttons button {
+    margin: 0.25rem;
+  }
+  
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    position: fixed;  /* <- agrega esto */
+    top: 50%;         /* centrado vertical */
+    left: 50%;        /* centrado horizontal */
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 1001;    /* <- que esté encima del backdrop */
+  }
+  
+  .modal-content h3 {
+    margin-bottom: 10px;
+  }
+  
+  .modal-content button {
+    margin: 5px;
+  }
+  
+  .modal-float {
+    position: absolute;
+    top: 80px; /* debajo del título */
+    right: 20px;
+    width: 300px;
+    background: white;
+    border: 2px solid #ccc;
+    padding: 16px;
+    z-index: 10;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+  
+  .modal-float h3 {
+    margin-top: 0;
+  }
+  
+  .options button,
+  .controls button {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+  }
+
+  .main-game {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .scoreboard {
+    min-width: 150px;
+    background-color: #f8f8f8;
+    padding: 10px;
+    border-radius: 10px;
+  }
+  
+  .scoreboard ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  
+  .cell {
+    width: 70px;    
+    height: 70px;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px; 
+    box-sizing: border-box;
+  }
+  
+  .board-row {
+    display: flex;
+  }
+  
+  .cell.highlight {
+    outline: 3px solid gold;
+    box-shadow: 0 0 10px 3px gold;
+    cursor: pointer;
+  }
+
+  
+  .team-names {
+    margin-bottom: 1rem;
+  }
+  
+  .team-name-input {
+    margin-bottom: 0.5rem;
+  }
+  
+  .team-name-input input {
+    margin-left: 0.5rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  
+  /* Botón icono configuración */
+.config-button {
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 10px;
+  user-select: none;
+}
+
+/* Fondo semi-transparente del modal */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Contenido modal centrado */
+.modal-content {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* Inputs equipo en modal */
+.team-name-input {
+  margin-bottom: 15px;
+}
+
+.team-name-input label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-name-input input {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 16px;
+}
+
+/* Botón cerrar modal */
+.close-modal {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.close-modal:hover {
+  background-color: #333;
+}
+

@@ -1,6 +1,12 @@
 # React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Cómo ejecutar
+Primero hay que moverse de carpeta:
+cd pizza-delivery-game
+
+Luego ejecutamos con:
+npm run dev
+
 
 Currently, two official plugins are available:
 

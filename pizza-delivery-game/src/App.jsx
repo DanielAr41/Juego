@@ -7,6 +7,7 @@ function App() {
     <Router>
     <Routes>
       <Route path="/:id" element={<PizzaDeliveryGame />} />
+      <Route path="/" element={<PizzaDeliveryGame />} />
     </Routes>
   </Router>
   );

@@ -15,6 +15,7 @@ const AVAILABLE_COLORS = [
   "pink",
   "brown",
   "#ADFF2F",
+  "#48D1CC",
 ];
 
 const getCenter = () => Math.floor(BOARD_SIZE / 2);
@@ -50,14 +51,17 @@ const PizzaDeliveryGame = () => {
   const [revealedAnswers, setRevealedAnswers] = useState({});
   const [showConfig, setShowConfig] = useState(false);
   const { id } = useParams();
+  const modoLibre = !id;
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-
+  
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
   };
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchQuestions = async () => {
       try {
         const response = await fetch(
@@ -438,30 +442,43 @@ const PizzaDeliveryGame = () => {
       )}
 
       {/* Modal preguntas */}
-{questions.length > 0 && currentQuestionIndex < questions.length && (
+      {(modoLibre || (questions.length > 0 && currentQuestionIndex < questions.length)) && (
   <div className="modal-float">
-    <h3>Pregunta {currentQuestionIndex + 1}</h3>
-    <p>{questions[currentQuestionIndex]?.question}</p>
-
-    {questions[currentQuestionIndex]?.type === 'mc' ? (
-      <div className="options">
-        {questions[currentQuestionIndex]?.options.map((opt, idx) => (
-          <button key={idx} onClick={() => handleMultipleChoice(opt)}>
-            {opt}
-          </button>
-        ))}
-      </div>
+    {modoLibre ? (
+      <>
+        <h3>Modo Libre (Tutorial)</h3>
+        <p>Puedes mover tu equipo libremente usando los botones.</p>
+        <div className="controls">
+          <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
+          <button onClick={() => confirmAnswer(false)}>✘ No</button>
+        </div>
+      </>
     ) : (
       <>
-        {!revealedAnswers[currentQuestionIndex] ? (
-          <button onClick={() => handleShowAnswer(currentQuestionIndex)}>👁 Mostrar Respuesta</button>
+        <h3>Pregunta {currentQuestionIndex + 1}</h3>
+        <p>{questions[currentQuestionIndex]?.question}</p>
+
+        {questions[currentQuestionIndex]?.type === 'mc' ? (
+          <div className="options">
+            {questions[currentQuestionIndex]?.options.map((opt, idx) => (
+              <button key={idx} onClick={() => handleMultipleChoice(opt)}>
+                {opt}
+              </button>
+            ))}
+          </div>
         ) : (
           <>
-            <p><strong>Respuesta:</strong> {questions[currentQuestionIndex]?.answer}</p>
-            <div className="controls">
-              <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
-              <button onClick={() => confirmAnswer(false)}>✘ No</button>
-            </div>
+            {!revealedAnswers[currentQuestionIndex] ? (
+              <button onClick={() => handleShowAnswer(currentQuestionIndex)}>👁 Mostrar Respuesta</button>
+            ) : (
+              <>
+                <p><strong>Respuesta:</strong> {questions[currentQuestionIndex]?.answer}</p>
+                <div className="controls">
+                  <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
+                  <button onClick={() => confirmAnswer(false)}>✘ No</button>
+                </div>
+              </>
+            )}
           </>
         )}
       </>
@@ -469,9 +486,7 @@ const PizzaDeliveryGame = () => {
   </div>
 )}
 
-
-
-      {questions.length > 0 && currentQuestionIndex >= questions.length && (
+      {!modoLibre && questions.length > 0 && currentQuestionIndex >= questions.length && (
         <div className="modal-float">
           <h3>Juego terminado</h3>
           {(() => {

@@ -48,13 +48,14 @@ const generateDeliveries = (count, existing = [], teamPositions = {}) => {
 };
 
 const PizzaDeliveryGame = () => {
+  const [selectedTeam, setSelectedTeam] = useState(null);
   const [revealedAnswers, setRevealedAnswers] = useState({});
   const [showConfig, setShowConfig] = useState(false);
   const { id } = useParams();
   const modoLibre = !id;
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  
+
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
   };
@@ -113,16 +114,21 @@ const PizzaDeliveryGame = () => {
 
   const [colorPickerOpen, setColorPickerOpen] = useState(null); // equipo que está eligiendo color
 
-  const currentTurnIndexState = useState(0);
+  /* const currentTurnIndexState = useState(0);
   const currentTurnIndex = currentTurnIndexState[0];
-  const setCurrentTurnIndex = currentTurnIndexState[1];
+  const setCurrentTurnIndex = currentTurnIndexState[1]; */
 
   const [canMove, setCanMove] = useState(false);
 
-  const currentTeam = TEAMS[currentTurnIndex];
+  /* const currentTeam = TEAMS[currentTurnIndex]; */
+  const currentTeam = selectedTeam;
 
   const handleCellClick = (row, col) => {
     if (!canMove) return;
+    if (!currentTeam) return; // no seleccionado aún
+
+    const position = teamPositions[currentTeam];
+    if (!position) return;
 
     const { row: currentRow, col: currentCol } = teamPositions[currentTeam];
     const isValidMove =
@@ -155,7 +161,8 @@ const PizzaDeliveryGame = () => {
     }
 
     setCanMove(false);
-    setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);
+    /*     setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);*/
+    setSelectedTeam(null);
     setCurrentQuestionIndex((prev) => prev + 1);
   };
 
@@ -165,17 +172,31 @@ const PizzaDeliveryGame = () => {
     confirmAnswer(isCorrect);
   };
 
+  const handleTeamNameClick = (team) => {
+    if (!canMove) {
+      setSelectedTeam(team);
+    }
+  };
+
   const confirmAnswer = (isCorrect) => {
     if (isCorrect) {
+      if (!selectedTeam) {
+        alert("Por favor, selecciona un equipo antes de mover.");
+        return;
+      }
       setCanMove(true);
     } else {
-      setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);
+      /* setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);
+      setCurrentQuestionIndex((prev) => prev + 1); */
+      setSelectedTeam(null);
       setCurrentQuestionIndex((prev) => prev + 1);
     }
   };
 
   const getValidMoves = () => {
-    if (!canMove) return [];
+    if (!canMove || !currentTeam) return [];
+    const position = teamPositions[currentTeam];
+    if (!position) return [];
 
     const { row, col } = teamPositions[currentTeam];
     const moves = [];
@@ -265,7 +286,8 @@ const PizzaDeliveryGame = () => {
     setTeamPositions(initialTeamPositions);
     setTeamScores(initialScores);
     setDeliveries(generateDeliveries(5, [], initialTeamPositions));
-    setCurrentTurnIndex(0);
+    /* setCurrentTurnIndex(0); */
+    setSelectedTeam(null);
     setCurrentQuestionIndex(0);
     setCanMove(false);
     setRevealedAnswers({});
@@ -274,19 +296,44 @@ const PizzaDeliveryGame = () => {
   return (
     <div className="game-container">
       <h2>
-        Turno del equipo:{" "}
-        <span style={{ color: teamColors[currentTeam], fontWeight: "bold" }}>
-          {teamNames[currentTeam]}
-        </span>
+        {selectedTeam ? (
+          <>
+            Turno del equipo:{" "}
+            <span
+              style={{ color: teamColors[selectedTeam], fontWeight: "bold" }}
+            >
+              {teamNames[selectedTeam]}
+            </span>
+          </>
+        ) : (
+          "Elige un equipo para comenzar"
+        )}
       </h2>
 
       <div className="main-game">
         <div className="scoreboard">
           <h3>Puntuación</h3>
-          <ul>
+          <ul className="team-list">
             {TEAMS.map((team) => (
-              <li key={team}>
-                <span
+              <li
+                key={team}
+                className={`team-card ${
+                  selectedTeam === team ? "selected" : ""
+                }`}
+                style={{ backgroundColor: teamColors[team] }}
+                onClick={() => !canMove && handleTeamNameClick(team)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ")
+                    handleTeamNameClick(team);
+                }}
+                aria-pressed={selectedTeam === team}
+                aria-label={`Seleccionar equipo ${teamNames[team]}, tiene ${teamScores[team]} puntos`}
+              >
+                <span className="team-name">{teamNames[team]}</span>
+                <span className="team-score">{teamScores[team]} pts</span>
+                {/* <span
                   className="team-color-box"
                   style={{
                     backgroundColor: teamColors[team],
@@ -298,30 +345,45 @@ const PizzaDeliveryGame = () => {
                     border: "1px solid black",
                     verticalAlign: "middle",
                   }}
-                />
-                {teamNames[team]}: {teamScores[team]}
+                /> */}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Botón icono engranaje */}
-        <button
-          className="config-button"
-          onClick={() => setShowConfig(true)}
-          aria-label="Abrir configuración"
-        >
-          ⚙️
-        </button>
-
-        <div className="board">
-          {Array.from({ length: BOARD_SIZE }).map((_, row) => (
-            <div className="board-row" key={row}>
-              {Array.from({ length: BOARD_SIZE }).map((_, col) =>
-                renderCell(row, col)
-              )}
+        <div className="board-and-config">
+          <div className="board-container">
+            {/* Letras superiores */}
+            <div className="column-labels">
+              <div className="spacer" />{" "}
+              {/* Esquina vacía superior izquierda */}
+              {Array.from({ length: BOARD_SIZE }).map((_, col) => (
+                <div key={`col-${col}`} className="col-label">
+                  {String.fromCharCode(65 + col)} {/* A, B, C... */}
+                </div>
+              ))}
             </div>
-          ))}
+
+            {/* Tablero con números al lado izquierdo */}
+            <div className="board">
+              {Array.from({ length: BOARD_SIZE }).map((_, row) => (
+                <div className="board-row" key={row}>
+                  <div className="row-label">{row + 1}</div>
+                  {Array.from({ length: BOARD_SIZE }).map((_, col) =>
+                    renderCell(row, col)
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Botón icono engranaje */}
+          <button
+                className="config-button"
+                onClick={() => setShowConfig(true)}
+                aria-label="Abrir configuración"
+              >
+                ⚙️
+              </button>
         </div>
       </div>
 
@@ -442,106 +504,120 @@ const PizzaDeliveryGame = () => {
       )}
 
       {/* Modal preguntas */}
-      {(modoLibre || (questions.length > 0 && currentQuestionIndex < questions.length)) && (
-  <div className="modal-float">
-    {modoLibre ? (
-      <>
-        <h3>Modo Libre (Tutorial)</h3>
-        <p>Puedes mover tu equipo libremente usando los botones.</p>
-        <div className="controls">
-          <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
-          <button onClick={() => confirmAnswer(false)}>✘ No</button>
-        </div>
-      </>
-    ) : (
-      <>
-        <h3>Pregunta {currentQuestionIndex + 1}</h3>
-        <p>{questions[currentQuestionIndex]?.question}</p>
-
-        {questions[currentQuestionIndex]?.type === 'mc' ? (
-          <div className="options">
-            {questions[currentQuestionIndex]?.options.map((opt, idx) => (
-              <button key={idx} onClick={() => handleMultipleChoice(opt)}>
-                {opt}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <>
-            {!revealedAnswers[currentQuestionIndex] ? (
-              <button onClick={() => handleShowAnswer(currentQuestionIndex)}>👁 Mostrar Respuesta</button>
-            ) : (
-              <>
-                <p><strong>Respuesta:</strong> {questions[currentQuestionIndex]?.answer}</p>
-                <div className="controls">
-                  <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
-                  <button onClick={() => confirmAnswer(false)}>✘ No</button>
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </>
-    )}
-  </div>
-)}
-
-      {!modoLibre && questions.length > 0 && currentQuestionIndex >= questions.length && (
+      {(modoLibre ||
+        (questions.length > 0 && currentQuestionIndex < questions.length)) && (
         <div className="modal-float">
-          <h3>Juego terminado</h3>
-          {(() => {
-            const winners = getWinners();
-            if (winners.length === 1) {
-              return (
+          {modoLibre ? (
+            <>
+              <h3>Modo Libre (Tutorial)</h3>
+              <p>Puedes mover tu equipo libremente usando los botones.</p>
+              <div className="controls">
+                <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
+                <button onClick={() => confirmAnswer(false)}>✘ No</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3>Pregunta {currentQuestionIndex + 1}</h3>
+              <p>{questions[currentQuestionIndex]?.question}</p>
+
+              {questions[currentQuestionIndex]?.type === "mc" ? (
+                <div className="options">
+                  {questions[currentQuestionIndex]?.options.map((opt, idx) => (
+                    <button key={idx} onClick={() => handleMultipleChoice(opt)}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              ) : (
                 <>
-                  <p>
-                    🎉 El equipo{" "}
-                    <strong style={{ color: teamColors[winners[0]] }}>
-                      {teamNames[winners[0]]}
-                    </strong>{" "}
-                    ha ganado con {teamScores[winners[0]]} puntos.
-                  </p>
-                  <button
-                    className="close-modal"
-                    onClick={reiniciarJuego}
-                    style={{ marginTop: 12 }}
-                  >
-                    🔁 Reiniciar juego
-                  </button>
+                  {!revealedAnswers[currentQuestionIndex] ? (
+                    <button
+                      onClick={() => handleShowAnswer(currentQuestionIndex)}
+                    >
+                      👁 Mostrar Respuesta
+                    </button>
+                  ) : (
+                    <>
+                      <p>
+                        <strong>Respuesta:</strong>{" "}
+                        {questions[currentQuestionIndex]?.answer}
+                      </p>
+                      <div className="controls">
+                        <button onClick={() => confirmAnswer(true)}>
+                          ✔ Sí
+                        </button>
+                        <button onClick={() => confirmAnswer(false)}>
+                          ✘ No
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </>
-              );
-            } else {
-              return (
-                <>
-                  <p>🤝 ¡Empate entre los equipos!</p>
-                  <ul>
-                    {winners.map((team) => (
-                      <li key={team}>
-                        <span
-                          style={{
-                            color: teamColors[team],
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {teamNames[team]}
-                        </span>{" "}
-                        con {teamScores[team]} puntos
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    className="close-modal"
-                    onClick={reiniciarJuego}
-                    style={{ marginTop: 12 }}
-                  >
-                    🔁 Reiniciar juego
-                  </button>
-                </>
-              );
-            }
-          })()}
+              )}
+            </>
+          )}
         </div>
       )}
+
+      {!modoLibre &&
+        questions.length > 0 &&
+        currentQuestionIndex >= questions.length && (
+          <div className="modal-float">
+            <h3>Juego terminado</h3>
+            {(() => {
+              const winners = getWinners();
+              if (winners.length === 1) {
+                return (
+                  <>
+                    <p>
+                      🎉 El equipo{" "}
+                      <strong style={{ color: teamColors[winners[0]] }}>
+                        {teamNames[winners[0]]}
+                      </strong>{" "}
+                      ha ganado con {teamScores[winners[0]]} puntos.
+                    </p>
+                    <button
+                      className="close-modal"
+                      onClick={reiniciarJuego}
+                      style={{ marginTop: 12 }}
+                    >
+                      🔁 Reiniciar juego
+                    </button>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <p>🤝 ¡Empate entre los equipos!</p>
+                    <ul>
+                      {winners.map((team) => (
+                        <li key={team}>
+                          <span
+                            style={{
+                              color: teamColors[team],
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {teamNames[team]}
+                          </span>{" "}
+                          con {teamScores[team]} puntos
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      className="close-modal"
+                      onClick={reiniciarJuego}
+                      style={{ marginTop: 12 }}
+                    >
+                      🔁 Reiniciar juego
+                    </button>
+                  </>
+                );
+              }
+            })()}
+          </div>
+        )}
     </div>
   );
 };

@@ -1,19 +1,18 @@
 // PizzaDeliveryGame.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef  } from "react";
 import "./PizzaDeliveryGame.css";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const BOARD_SIZE = 7;
 const TEAMS = ["red", "blue", "green", "yellow"];
 const AVAILABLE_COLORS = [
-  "red",
-  "blue",
-  "green",
-  "yellow",
+  "#DC143C",
+  "#FFD700",
   "purple",
   "orange",
   "pink",
-  "brown",
+  "#6A5ACD",
   "#ADFF2F",
   "#48D1CC",
 ];
@@ -47,50 +46,91 @@ const generateDeliveries = (count, existing = [], teamPositions = {}) => {
   return deliveries;
 };
 
+const generateRandomObstaclePosition = (deliveries, obstacles, teamPositions) => {
+  let row, col;
+  do {
+    row = Math.floor(Math.random() * BOARD_SIZE);
+    col = Math.floor(Math.random() * BOARD_SIZE);
+  } while (
+    (row === getCenter() && col === getCenter()) ||
+    deliveries.some((d) => d.row === row && d.col === col) ||
+    obstacles.some((o) => o.row === row && o.col === col) ||
+    Object.values(teamPositions).some((pos) => pos.row === row && pos.col === col)
+  );
+  return { row, col };
+};
+
 const PizzaDeliveryGame = () => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [revealedAnswers, setRevealedAnswers] = useState({});
   const [showConfig, setShowConfig] = useState(false);
-  const { id } = useParams();
-  const modoLibre = !id;
+  //const { id } = useParams();
+  //const modoLibre = !id;
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  const [obstacles, setObstacles] = useState([]);
+  const [deliveriesCompleted, setDeliveriesCompleted] = useState(0);
 
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
   };
 
-  useEffect(() => {
-    if (!id) return;
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const id = queryParams.get("themes"); // reemplaza "id" por este
+  const modoLibre = !id;
 
+  const didFetchRef = useRef(false);
+  useEffect(() => {
+    const themeParams = queryParams.getAll("themes"); // array con todos los temas
+    const modoLibre = themeParams.length === 0;
+    if (modoLibre || didFetchRef.current) return;
+  
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(
-          `http://148.206.168.178/vaep/api/v1/theme/${id}`
-        );
+        const query = themeParams.map(t => `themes=${t}`).join("&");
+        const url = `http://148.206.168.178/vaep/api/v1/question/theme?${query}`;
+  
+        const response = await fetch(url);
         const data = await response.json();
-
-        const openQs = data.data.openQuestions.map((q) => ({
-          type: "open",
-          question: q.question,
-          answer: q.answer,
-        }));
-
-        const mcQs = data.data.mcQuestions.map((q) => ({
-          type: "mc",
-          question: q.question,
-          options: q.answers,
-          correctAnswer: q.correctAnswer,
-        }));
-
+  
+        const themeData = Array.isArray(data.data) ? data.data : [data.data];
+  
+        const openQs = themeData.flatMap((item) =>
+          item.openQuestions.map((q) => ({
+            type: "open",
+            question: q.question,
+            answer: q.answer,
+          }))
+        );
+  
+        const mcQs = themeData.flatMap((item) =>
+          item.multipleChoiceQuestions.map((q) => ({
+            type: "mc",
+            question: q.question,
+            options: q.answers,
+            correctAnswer: q.correctAnswer,
+          }))
+        );
+  
         setQuestions([...openQs, ...mcQs]);
+        console.log("Preguntas cargadas:", [...openQs, ...mcQs]);
       } catch (error) {
         console.error("Error al cargar preguntas:", error);
       }
     };
-
+  
     fetchQuestions();
-  }, [id]);
+    didFetchRef.current = true;
+  }, []);
+  
+  useEffect(() => {
+    if (deliveriesCompleted > 0 && deliveriesCompleted % 2 === 0) {
+      const newObstacle = generateRandomObstaclePosition(deliveries, obstacles, teamPositions);
+      setObstacles((prev) => [...prev, newObstacle]);
+    }
+  }, [deliveriesCompleted]);
 
   const [teamPositions, setTeamPositions] = useState(initialTeamPositions);
   const [deliveries, setDeliveries] = useState(() => {
@@ -137,6 +177,8 @@ const PizzaDeliveryGame = () => {
     if (!isValidMove || (currentRow === row && currentCol === col)) return;
 
     const delivered = deliveries.find((d) => d.row === row && d.col === col);
+    const blocked = obstacles.some((o) => o.row === row && o.col === col);
+    if (blocked) return;
 
     const newPosition = { row, col };
 
@@ -150,6 +192,8 @@ const PizzaDeliveryGame = () => {
         ...prev,
         [currentTeam]: prev[currentTeam] + 1,
       }));
+
+      setDeliveriesCompleted((prev) => prev + 1);
 
       setDeliveries((prev) => {
         const updated = prev.filter((d) => !(d.row === row && d.col === col));
@@ -219,7 +263,9 @@ const PizzaDeliveryGame = () => {
             teamPositions[team].col === newCol
         );
 
-        if (withinBounds && !isOccupied) {
+        const isObstacle = obstacles.some((o) => o.row === newRow && o.col === newCol);
+
+        if (withinBounds && !isOccupied && !isObstacle) {
           moves.push({ row: newRow, col: newCol });
         }
       }
@@ -230,6 +276,7 @@ const PizzaDeliveryGame = () => {
 
   const renderCell = (row, col) => {
     const deliveryHere = deliveries.some((d) => d.row === row && d.col === col);
+    const obstacleHere = obstacles.some((o) => o.row === row && o.col === col);
     const teamHere = TEAMS.find(
       (team) =>
         teamPositions[team].row === row && teamPositions[team].col === col
@@ -241,6 +288,7 @@ const PizzaDeliveryGame = () => {
 
     const classNames = ["cell"];
     if (deliveryHere) classNames.push("delivery");
+    if (obstacleHere) classNames.push("obstacle");
     if (teamHere) classNames.push(teamColors[teamHere]);
     if (isValidMoveCell) classNames.push("highlight");
 
@@ -250,9 +298,15 @@ const PizzaDeliveryGame = () => {
         className={classNames.join(" ")}
         onClick={() => handleCellClick(row, col)}
         style={teamHere ? { backgroundColor: teamColors[teamHere] } : {}}
-        title={deliveryHere ? "Entrega aquí 🍕" : ""}
+        title={
+          deliveryHere
+            ? "Entrega aquí 🍕"
+            : obstacleHere
+            ? "Obstáculo 🧱"
+            : ""
+        }
       >
-        {deliveryHere ? "🍕" : teamHere ? "🚗" : ""}
+        {deliveryHere ? "🍕" : obstacleHere ? "🧱" : teamHere ? "🚗" : ""}
       </div>
     );
   };
@@ -306,7 +360,7 @@ const PizzaDeliveryGame = () => {
             </span>
           </>
         ) : (
-          "Elige un equipo para comenzar"
+          "Elige el equipo que realizará el movimiento"
         )}
       </h2>
 

@@ -358,3 +358,10 @@
   align-items: center;
   gap: 16px;
 }
+
+.obstacle {
+  background-color: #fff;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}

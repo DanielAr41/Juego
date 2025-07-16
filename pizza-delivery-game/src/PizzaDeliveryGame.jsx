@@ -460,90 +460,81 @@ const PizzaDeliveryGame = () => {
               const isPickerOpen = colorPickerOpen === team;
               const usedColors = Object.values(teamColors);
               return (
-                <div
-                  key={team}
-                  className="team-config-row"
-                  style={{ position: "relative", marginBottom: 12 }}
-                >
-                  <label style={{ marginRight: 8 }}>
-                    Nombre:
-                    <input
-                      type="text"
-                      value={teamNames[team]}
-                      onChange={(e) =>
-                        setTeamNames((prev) => ({
-                          ...prev,
-                          [team]: e.target.value,
-                        }))
-                      }
-                      style={{ marginLeft: 8 }}
-                    />
-                  </label>
+                <div key={team} className="team-config-row" style={{ marginBottom: 16 }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div className="inputGroup">
+      <input
+        type="text"
+        id={`team-${team}`}
+        value={teamNames[team]}
+        onChange={(e) =>
+          setTeamNames((prev) => ({
+            ...prev,
+            [team]: e.target.value,
+          }))
+        }
+        required
+      />
+      <label htmlFor={`team-${team}`}>Nombre del equipo</label>
+    </div>
 
-                  <span
-                    className="team-color-box"
-                    style={{
-                      backgroundColor: teamColors[team],
-                      display: "inline-block",
-                      width: 24,
-                      height: 24,
-                      cursor: "pointer",
-                      border: "2px solid black",
-                      borderRadius: 4,
-                    }}
-                    title="Cambiar color"
-                    onClick={() => handleColorClick(team)}
-                  />
+    <div className="color-picker-wrapper" style={{ position: "relative" }}>
+      <button
+        className="color-picker-button"
+        style={{
+          backgroundColor: teamColors[team],
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          border: "2px solid white",
+          cursor: "pointer",
+        }}
+        onClick={() => handleColorClick(team)}
+        title="Seleccionar color"
+      />
 
-                  {isPickerOpen && (
-                    <div
-                      className="color-picker"
-                      style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        padding: 8,
-                        borderRadius: 4,
-                        display: "flex",
-                        flexWrap: "wrap",
-                        zIndex: 1000,
-                      }}
-                    >
-                      {AVAILABLE_COLORS.map((color) => {
-                        const isUsed = usedColors.includes(color);
-                        const isCurrent = teamColors[team] === color;
-                        return (
-                          <div
-                            key={color}
-                            onClick={() =>
-                              !isUsed || isCurrent
-                                ? handleColorSelect(team, color)
-                                : null
-                            }
-                            style={{
-                              backgroundColor: color,
-                              width: 24,
-                              height: 24,
-                              margin: 4,
-                              border: isCurrent
-                                ? "3px solid black"
-                                : "1px solid gray",
-                              opacity: isUsed && !isCurrent ? 0.4 : 1,
-                              cursor:
-                                isUsed && !isCurrent
-                                  ? "not-allowed"
-                                  : "pointer",
-                              borderRadius: 4,
-                            }}
-                            title={color}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+      {isPickerOpen && (
+        <div
+          className="color-picker-popup"
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            display: "flex",
+            flexWrap: "wrap",
+            background: "#222",
+            padding: 8,
+            borderRadius: 8,
+            marginTop: 6,
+            zIndex: 10,
+            gap: 6,
+          }}
+        >
+          {AVAILABLE_COLORS.map((color) => (
+            <div
+              key={color}
+              style={{
+                backgroundColor: color,
+                width: 20,
+                height: 20,
+                borderRadius: "50%",
+                border: "2px solid white",
+                cursor: usedColors.includes(color) && teamColors[team] !== color ? "not-allowed" : "pointer",
+                opacity: usedColors.includes(color) && teamColors[team] !== color ? 0.5 : 1,
+              }}
+              onClick={() =>
+                !usedColors.includes(color) || teamColors[team] === color
+                  ? handleColorSelect(team, color)
+                  : null
+              }
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
               );
             })}
             <button
@@ -586,7 +577,7 @@ const PizzaDeliveryGame = () => {
               ) : (
                 <>
                   {!revealedAnswers[currentQuestionIndex] ? (
-                    <button
+                    <button className="button-30"
                       onClick={() => handleShowAnswer(currentQuestionIndex)}
                     >
                       👁 Mostrar Respuesta
@@ -598,13 +589,19 @@ const PizzaDeliveryGame = () => {
                         {questions[currentQuestionIndex]?.answer}
                       </p>
                       <div className="controls">
-                        <button onClick={() => confirmAnswer(true)}>
-                          ✔ Sí
-                        </button>
-                        <button onClick={() => confirmAnswer(false)}>
-                          ✘ No
-                        </button>
-                      </div>
+  <button className="button-82-pushable green-button" onClick={() => confirmAnswer(true)} role="button">
+    <span className="button-82-shadow"></span>
+    <span className="button-82-edge"></span>
+    <span className="button-82-front text">✔ Sí</span>
+  </button>
+
+  <button className="button-82-pushable" onClick={() => confirmAnswer(false)} role="button" style={{ marginLeft: '16px' }}>
+    <span className="button-82-shadow"></span>
+    <span className="button-82-edge"></span>
+    <span className="button-82-front text">✘ No</span>
+  </button>
+</div>
+
                     </>
                   )}
                 </>

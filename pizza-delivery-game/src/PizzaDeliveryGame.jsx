@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef  } from "react";
 import "./PizzaDeliveryGame.css";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import logoUAM from '/src/assets/logoUAM.png';
 
 const BOARD_SIZE = 7;
 const TEAMS = ["red", "blue", "green", "yellow"];
@@ -233,7 +234,8 @@ const PizzaDeliveryGame = () => {
       /* setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);
       setCurrentQuestionIndex((prev) => prev + 1); */
       setSelectedTeam(null);
-      setCurrentQuestionIndex((prev) => prev + 1);
+      //setCurrentQuestionIndex((prev) => prev + 1);
+      //setCurrentQuestionIndex(null);
     }
   };
 
@@ -348,7 +350,35 @@ const PizzaDeliveryGame = () => {
   };
 
   return (
+    <div id="root">
     <div className="game-container">
+      <header className="header">
+      <img alt="Logo UAM" className="logo" src={logoUAM} />
+  <div className="header-content">
+    <h3 className="header-title">Rápidos y sabios</h3>
+
+    <div className="page-titles">
+        <div style={{display: "flex", flexFlow: "row", alignItems: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",}}>
+        </div>
+    </div>
+
+          <div
+            style={{
+              display: "flex",
+              position: "absolute",
+              right: "1rem",
+              top: "50%",
+              transform: "translateY(-50%)",
+              gap: "10px",
+            }}
+          >
+          </div>
+        </div>
+        <a href="http://148.206.168.145/vaep/" className="back-button" aria-label="Regresar">
+    ⬅️ Regresar
+  </a>
+      </header>
+
       <h2>
         {selectedTeam ? (
           <>
@@ -576,35 +606,48 @@ const PizzaDeliveryGame = () => {
                 </div>
               ) : (
                 <>
-                  {!revealedAnswers[currentQuestionIndex] ? (
-                    <button className="button-30"
-                      onClick={() => handleShowAnswer(currentQuestionIndex)}
-                    >
-                      👁 Mostrar Respuesta
-                    </button>
-                  ) : (
-                    <>
-                      <p>
-                        <strong>Respuesta:</strong>{" "}
-                        {questions[currentQuestionIndex]?.answer}
-                      </p>
-                      <div className="controls">
-  <button className="button-82-pushable green-button" onClick={() => confirmAnswer(true)} role="button">
-    <span className="button-82-shadow"></span>
-    <span className="button-82-edge"></span>
-    <span className="button-82-front text">✔ Sí</span>
-  </button>
+                  {/* Botón mostrar respuesta */}
+    {!revealedAnswers[currentQuestionIndex] && (
+      <button
+        className="button-30"
+        onClick={() => handleShowAnswer(currentQuestionIndex)}
+      >
+        👁 Mostrar Respuesta
+      </button>
+    )}
 
-  <button className="button-82-pushable" onClick={() => confirmAnswer(false)} role="button" style={{ marginLeft: '16px' }}>
-    <span className="button-82-shadow"></span>
-    <span className="button-82-edge"></span>
-    <span className="button-82-front text">✘ No</span>
-  </button>
-</div>
+                   {/* Si ya se reveló, muestro la respuesta */}
+    {revealedAnswers[currentQuestionIndex] && (
+      <p>
+        <strong>Respuesta:</strong>{" "}
+        {questions[currentQuestionIndex]?.answer}
+      </p>
+    )}
 
-                    </>
-                  )}
-                </>
+    {/* Los botones de Sí y No SIEMPRE visibles */}
+    <div className="controls">
+      <button
+        className="button-82-pushable green-button"
+        onClick={() => confirmAnswer(true)}
+        role="button"
+      >
+        <span className="button-82-shadow"></span>
+        <span className="button-82-edge"></span>
+        <span className="button-82-front text">✔ Sí</span>
+      </button>
+
+      <button
+        className="button-82-pushable"
+        onClick={() => confirmAnswer(false)}
+        role="button"
+        style={{ marginLeft: "16px" }}
+      >
+        <span className="button-82-shadow"></span>
+        <span className="button-82-edge"></span>
+        <span className="button-82-front text">✘ No</span>
+      </button>
+    </div>
+  </>
               )}
             </>
           )}
@@ -669,6 +712,22 @@ const PizzaDeliveryGame = () => {
             })()}
           </div>
         )}
+              {/* Footer */}
+              <footer className="footer-custom mt-10">
+  <ul>
+    <li>Copyright © Universidad Autonoma Metropolitana 2025</li>
+    <li>
+      Responsables del sitio: Dra. María del Carmen Gómez Fuentes y Dr. Jorge
+      Cervantes Ojeda
+    </li>
+    <li>
+      Desarrollador del juego: Jhoan Daniel Arenas Reyes
+    </li>
+  </ul>
+</footer>
+
+
+</div>
     </div>
   );
 };

@@ -1,10 +1,27 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* altura completa de la ventana */
+}
+
 .game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    font-family: sans-serif;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  font-family: sans-serif;
+
+  flex: 1; 
+  width: 100%;
+  padding-top: 60px; /* o la altura de tu header fijo */
+}
+
+
   
   .board {
     display: flex;
@@ -592,4 +609,82 @@ body, html {
   background-color: #e8e8e8;
   padding: 0 0.4em;
   margin-left: 1.2em;
+}
+
+.footer-custom {
+  background-color: var(--color-slate-900, #0f172a);
+  color: white;
+  text-align: center;
+  padding: 20px 0;
+  width: 100%;   /* ocupa todo el ancho */
+}
+
+
+.footer-custom ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-custom li {
+  font-size: 0.875rem; /* equivalente a text-sm */
+  margin-bottom: 4px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* dejamos el logo a la izquierda */
+  background-color: #f90;
+  color: white;
+  padding: 0.5rem 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.logo {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.header-content {
+  flex: 1;
+  position: relative; /* necesario para centrar el título absoluto */
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  
+  /* centrado absoluto */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2.5rem;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  background-color: #fff;
+  color: #f90;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 1px solid #f90;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #f90;
+  color: #fff;
 }

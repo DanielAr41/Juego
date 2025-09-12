@@ -18,6 +18,14 @@ const AVAILABLE_COLORS = [
   "#48D1CC",
 ];
 
+
+const TEAM_ICONS = {
+  red: "🚚",
+  blue: "🚛",
+  green:"🚚",
+  yellow:"🚙",
+}
+
 const getCenter = () => Math.floor(BOARD_SIZE / 2);
 
 const initialTeamPositions = TEAMS.reduce((acc, team) => {
@@ -72,6 +80,11 @@ const PizzaDeliveryGame = () => {
 
   const [obstacles, setObstacles] = useState([]);
   const [deliveriesCompleted, setDeliveriesCompleted] = useState(0);
+
+  const [powerUps, setPowerUps] = useState([]);
+  const [moveCount, setMoveCount] = useState(0);
+  const [boostedTeams, setBoostedTeams] = useState({});
+  
 
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
@@ -171,15 +184,29 @@ const PizzaDeliveryGame = () => {
     const position = teamPositions[currentTeam];
     if (!position) return;
 
+
     const { row: currentRow, col: currentCol } = teamPositions[currentTeam];
+
+    const range = boostedTeams[currentTeam] ? 2 : 1;
+
     const isValidMove =
-      Math.abs(currentRow - row) <= 1 && Math.abs(currentCol - col) <= 1;
+      Math.abs(currentRow - row) <= range &&
+      Math.abs(currentCol - col) <= range &&
+      !(currentRow === row && currentCol === col);
+
+
 
     if (!isValidMove || (currentRow === row && currentCol === col)) return;
 
     const delivered = deliveries.find((d) => d.row === row && d.col === col);
     const blocked = obstacles.some((o) => o.row === row && o.col === col);
     if (blocked) return;
+
+    const powerUpHere = powerUps.some((p) => p.row === row && p.col === col);
+    if (powerUpHere) {
+      setPowerUps((prev) => prev.filter((p) => !(p.row === row && p.col === col)));
+      setBoostedTeams((prev) => ({ ...prev, [currentTeam]: true }));
+    }
 
     const newPosition = { row, col };
 
@@ -205,10 +232,17 @@ const PizzaDeliveryGame = () => {
       });
     }
 
+    setMoveCount((prev) => prev + 1);
+
     setCanMove(false);
     /*     setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);*/
     setSelectedTeam(null);
     setCurrentQuestionIndex((prev) => prev + 1);
+
+    if (boostedTeams[currentTeam]) {
+      setBoostedTeams((prev) => ({ ...prev, [currentTeam]: false }));
+    }
+
   };
 
   const handleMultipleChoice = (selected) => {
@@ -239,51 +273,68 @@ const PizzaDeliveryGame = () => {
     }
   };
 
-  const getValidMoves = () => {
-    if (!canMove || !currentTeam) return [];
-    const position = teamPositions[currentTeam];
-    if (!position) return [];
-
-    const { row, col } = teamPositions[currentTeam];
-    const moves = [];
-
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-
-        const newRow = row + dr;
-        const newCol = col + dc;
-
-        const withinBounds =
+  const getValidMoves = (team) => {
+    const { row, col } = teamPositions[team];
+    const range = boostedTeams[team] ? 2 : 1; // si está boosteado, se mueve 2
+  
+    let moves = [];
+    for (let r = -range; r <= range; r++) {
+      for (let c = -range; c <= range; c++) {
+        // Evita la celda actual del jugador
+        if (r === 0 && c === 0) continue;
+    
+        const newRow = row + r;
+        const newCol = col + c;
+    
+        if (
           newRow >= 0 &&
           newRow < BOARD_SIZE &&
           newCol >= 0 &&
-          newCol < BOARD_SIZE;
-        const isOccupied = TEAMS.some(
-          (team) =>
-            teamPositions[team].row === newRow &&
-            teamPositions[team].col === newCol
-        );
-
-        const isObstacle = obstacles.some((o) => o.row === newRow && o.col === newCol);
-
-        if (withinBounds && !isOccupied && !isObstacle) {
-          moves.push({ row: newRow, col: newCol });
+          newCol < BOARD_SIZE
+        ) {
+          // Evita obstáculos
+          if (!obstacles.some((o) => o.row === newRow && o.col === newCol)) {
+            moves.push({ row: newRow, col: newCol });
+          }
         }
       }
     }
-
+    
     return moves;
+  };
+  
+  // Numero de movimientos para que aparezca el power up
+  useEffect(() => {
+    if (moveCount > 0 && moveCount % 5 === 0) {
+      spawnPowerUp();
+    }
+  }, [moveCount]);
+  
+  const spawnPowerUp = () => {
+    let newRow, newCol;
+    do {
+      newRow = Math.floor(Math.random() * BOARD_SIZE);
+      newCol = Math.floor(Math.random() * BOARD_SIZE);
+    } while (
+      deliveries.some((d) => d.row === newRow && d.col === newCol) ||
+      obstacles.some((o) => o.row === newRow && o.col === newCol) ||
+      powerUps.some((p) => p.row === newRow && p.col === newCol) ||
+      Object.values(teamPositions).some((pos) => pos.row === newRow && pos.col === newCol) // evita jugadores
+
+    );
+  
+    setPowerUps((prev) => [...prev, { row: newRow, col: newCol }]);
   };
 
   const renderCell = (row, col) => {
+    const powerUpHere = powerUps.some((p) => p.row === row && p.col === col);
     const deliveryHere = deliveries.some((d) => d.row === row && d.col === col);
     const obstacleHere = obstacles.some((o) => o.row === row && o.col === col);
     const teamHere = TEAMS.find(
       (team) =>
         teamPositions[team].row === row && teamPositions[team].col === col
     );
-    const validMoves = getValidMoves();
+    const validMoves = canMove && currentTeam ? getValidMoves(currentTeam) : [];
     const isValidMoveCell = validMoves.some(
       (pos) => pos.row === row && pos.col === col
     );
@@ -308,10 +359,14 @@ const PizzaDeliveryGame = () => {
             : ""
         }
       >
-        {deliveryHere ? "🍕" : obstacleHere ? "🧱" : teamHere ? "🚗" : ""}
+        {/* {deliveryHere ? "🍕" : obstacleHere ? "🧱" : teamHere ? "🚗" : ""} */}
+        {deliveryHere ? "🍕" : obstacleHere ? "🧱" : powerUpHere ? "⚡" : ""}
       </div>
     );
   };
+
+
+  
 
   // Cambiar color de equipo si no está ocupado o si es el color actual
   const handleColorSelect = (team, color) => {
@@ -348,35 +403,81 @@ const PizzaDeliveryGame = () => {
     setCanMove(false);
     setRevealedAnswers({});
   };
+  
+  // refs y estado para medir celdas / etiquetas
+const boardRef = useRef(null);
+const [cellMetrics, setCellMetrics] = useState({
+  width: 70,      // valor por defecto (se actualizará al montar)
+  height: 70,
+  rowGap: 5,
+  labelOffset: 48, // offset izquierdo para que la capa de jugadores comience después del row-label
+});
+
+useEffect(() => {
+  const measure = () => {
+    const boardEl = boardRef.current;
+    if (!boardEl) return;
+
+    const firstCell = boardEl.querySelector(".cell");
+    const rowLabelEl = boardEl.querySelector(".row-label");
+
+    const cellRect = firstCell ? firstCell.getBoundingClientRect() : null;
+    const computedBoard = window.getComputedStyle(boardEl);
+    const computedRowLabel = rowLabelEl ? window.getComputedStyle(rowLabelEl) : null;
+
+    const width = cellRect ? cellRect.width : 70;
+    const height = cellRect ? cellRect.height : 70;
+
+    // obtener gap/row-gap (compatibilidad con navegadores)
+    let gap = parseFloat(computedBoard.getPropertyValue("row-gap")) ||
+              parseFloat(computedBoard.getPropertyValue("gap")) ||
+              0;
+    if (isNaN(gap)) gap = 0;
+
+    const labelOffset = rowLabelEl
+      ? (parseFloat(computedRowLabel.getPropertyValue("width")) || 40) +
+        (parseFloat(computedRowLabel.getPropertyValue("margin-right")) || 8)
+      : 48;
+
+    setCellMetrics({
+      width,
+      height,
+      rowGap: gap,
+      labelOffset,
+    });
+  };
+
+  measure();
+  window.addEventListener("resize", measure);
+  return () => window.removeEventListener("resize", measure);
+}, []);
+
 
   return (
     <div id="root">
     <div className="game-container">
       <header className="header">
-      <img alt="Logo UAM" className="logo" src={logoUAM} />
-  <div className="header-content">
-    <h3 className="header-title">Rápidos y sabios</h3>
+        <img alt="Logo UAM" className="logo" src={logoUAM} />
+        <div className="header-content">
+          <h3 className="header-title">Rápidos y sabios</h3>
 
-    <div className="page-titles">
-        <div style={{display: "flex", flexFlow: "row", alignItems: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",}}>
-        </div>
-    </div>
+          <div className="page-titles">
+            <div style={{display: "flex", flexFlow: "row", alignItems: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",}}>
+            </div>
+          </div>
 
-          <div
-            style={{
-              display: "flex",
-              position: "absolute",
-              right: "1rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              gap: "10px",
-            }}
-          >
+          <div style={{
+                display: "flex",
+                position: "absolute",
+                right: "1rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                gap: "10px",
+              }}
+            >
           </div>
         </div>
-        <a href="http://148.206.168.145/vaep/" className="back-button" aria-label="Regresar">
-    ⬅️ Regresar
-  </a>
+        <a href="http://148.206.168.145/vaep/" className="back-button" aria-label="Regresar">⬅️ Regresar</a>
       </header>
 
       <h2>
@@ -449,23 +550,51 @@ const PizzaDeliveryGame = () => {
             </div>
 
             {/* Tablero con números al lado izquierdo */}
-            <div className="board">
-              {Array.from({ length: BOARD_SIZE }).map((_, row) => (
-                <div className="board-row" key={row}>
-                  <div className="row-label">{row + 1}</div>
-                  {Array.from({ length: BOARD_SIZE }).map((_, col) =>
-                    renderCell(row, col)
-                  )}
-                </div>
-              ))}
-            </div>
+            <div className="board" ref={boardRef}>
+  {Array.from({ length: BOARD_SIZE }).map((_, row) => (
+    <div className="board-row" key={row}>
+      <div className="row-label">{row + 1}</div>
+      {Array.from({ length: BOARD_SIZE }).map((_, col) =>
+        renderCell(row, col)
+      )}
+    </div>
+  ))}
+
+  {/* Capa de jugadores (posicionada dinámicamente) */}
+  <div
+    className="players-layer"
+    style={{ left: `${cellMetrics.labelOffset}px`, top: 0 }}
+  >
+    {TEAMS.map((team) => {
+      const { row, col } = teamPositions[team];
+      const x = col * cellMetrics.width;
+      const y = row * (cellMetrics.height + cellMetrics.rowGap);
+
+      return (
+        <div
+          key={team}
+          className="player"
+          style={{
+            width: `${cellMetrics.width}px`,
+            height: `${cellMetrics.height}px`,
+            transform: `translate3d(${x}px, ${y}px, 0)`,
+            color: teamColors[team],
+            zIndex: 20,
+            pointerEvents: "none",
+            // opcional: ajustar tamaño del emoji si quieres
+            fontSize: `${Math.min(cellMetrics.width, cellMetrics.height) * 0.6}px`,
+          }}
+        >
+          {TEAM_ICONS[team]}
+        </div>
+      );
+    })}
+  </div>
+</div>
+
           </div>
-          {/* Botón icono engranaje */}
-          <button
-                className="config-button"
-                onClick={() => setShowConfig(true)}
-                aria-label="Abrir configuración"
-              >
+              {/* Botón icono engranaje */}
+              <button className="config-button" onClick={() => setShowConfig(true)} aria-label="Abrir configuración">
                 ⚙️
               </button>
         </div>
@@ -714,20 +843,20 @@ const PizzaDeliveryGame = () => {
         )}
               {/* Footer */}
               <footer className="footer-custom mt-10">
-  <ul>
-    <li>Copyright © Universidad Autonoma Metropolitana 2025</li>
-    <li>
-      Responsables del sitio: Dra. María del Carmen Gómez Fuentes y Dr. Jorge
-      Cervantes Ojeda
-    </li>
-    <li>
-      Desarrollador del juego: Jhoan Daniel Arenas Reyes
-    </li>
-  </ul>
-</footer>
+              <ul>
+                <li>Copyright © Universidad Autonoma Metropolitana 2025</li>
+                <li>
+                  Responsables del sitio: Dra. María del Carmen Gómez Fuentes y Dr. Jorge
+                  Cervantes Ojeda
+                </li>
+                <li>
+                  Desarrollador del juego: Jhoan Daniel Arenas Reyes
+                </li>
+              </ul>
+            </footer>
 
 
-</div>
+      </div>
     </div>
   );
 };

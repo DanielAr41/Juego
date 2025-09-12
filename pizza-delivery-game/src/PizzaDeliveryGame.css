@@ -10,15 +10,14 @@ html, body {
 }
 
 .game-container {
+  flex: 1; /* ocupa todo el espacio entre header y footer */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
   font-family: sans-serif;
-
-  flex: 1; 
+  padding-top: 60px; /* altura de tu header */
   width: 100%;
-  padding-top: 60px; /* o la altura de tu header fijo */
 }
 
 
@@ -157,12 +156,7 @@ html, body {
     margin-top: 0;
   }
   
-  .options button,
-  .controls button {
-    display: block;
-    width: 100%;
-    margin: 5px 0;
-  }
+
 
   .main-game {
     display: flex;
@@ -628,7 +622,8 @@ body, html {
   color: white;
   text-align: center;
   padding: 20px 0;
-  width: 100%;   /* ocupa todo el ancho */
+  width: 100%;
+  margin-top: auto; /* empuja el footer hacia abajo si hay espacio */
 }
 
 
@@ -726,3 +721,203 @@ body, html {
   pointer-events: none;
 }
 
+/* ----- PREGUNTAS OPCION MULTIPLE ----- */
+/* Contenedor de opciones de múltiple choice */
+/* Contenedor de opciones */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  max-width: 100%; /* nunca sobrepasa el modal */
+}
+
+.options .button-82-pushable {
+  margin: 6px 0;
+  padding: 0;
+  min-width: 150px; /* más delgado */
+}
+
+.options .button-82-front {
+  background: rgb(212, 209, 203);
+  padding: 5px 2px; /* más delgado */
+  font-size: 1rem;
+  color: rgb(0, 0, 0);
+}
+
+.options .button-82-edge {
+  background: linear-gradient(to left, hsl(35, 11%, 69%) 0%, hsl(36, 10%, 30%) 50%, hsl(30, 3%, 24%) 100%);
+}
+
+.options .button-82-pushable:hover .button-82-front {
+  transform: translateY(-4px);
+}
+
+.options .button-82-pushable:active .button-82-front {
+  transform: translateY(-2px);
+}
+
+.options .button-82-pushable:hover .button-82-shadow {
+  transform: translateY(3px);
+}
+
+.options .button-82-pushable:active .button-82-shadow {
+  transform: translateY(1px);
+}
+
+.options .button-82-pushable.selected .button-82-front {
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+
+
+/* ----- FIN PREGUNTAS OPCION MULTIPLE ----- */
+
+
+/*MODAL MENSAJE*/
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff; /* color amarillo de alerta */
+  border: 2px solid #ffffff;
+  padding: 20px 30px;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.modal-content p {
+  margin: 0 0 12px 0;
+  font-weight: bold;
+  color: #856404;
+}
+
+.close-modal {
+  padding: 8px 16px;
+  background-color: #856404;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.close-modal:hover {
+  background-color: #533f03;
+}
+
+
+/**/
+.floating-message {
+  position: absolute; /* se posiciona dentro del tablero */
+  top: 80px;          /* ajusta según tu tablero */
+  left: 100px;        /* margen desde la derecha */
+  z-index: 50;        /* encima de las celdas pero debajo de jugadores si quieres */
+  max-width: 300px;
+  background-color: #fff3cd; /* amarillo alerta */
+  border: 2px solid #ffeeba;
+  border-radius: 10px;
+  padding: 30px 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  color: #856404;
+  font-weight: bold;
+  pointer-events: none; /* no bloquea clicks por defecto */
+}
+
+.floating-message h3 {
+  margin-top: 0;
+}
+
+.floating-message p {
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+
+/*Instrucciones*/
+.instructions-btn {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Modal de instrucciones */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  text-align: left;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.3s ease;
+}
+
+.modal h2 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.4rem;
+}
+
+.modal ul {
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.modal ul li {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.orange-button .button-82-edge {
+  background: linear-gradient(
+    to left,
+    hsl(30deg 100% 20%) 0%,
+    hsl(30deg 100% 40%) 8%,
+    hsl(30deg 100% 40%) 92%,
+    hsl(30deg 100% 20%) 100%
+  );
+}
+
+.orange-button .button-82-front {
+  background: #ff9900; /* Naranja vibrante */
+}
+
+
+.gray-button .button-82-edge {
+  background: linear-gradient(
+    to left,
+    hsl(0deg 0% 25%) 0%,
+    hsl(0deg 0% 40%) 8%,
+    hsl(0deg 0% 40%) 92%,
+    hsl(0deg 0% 25%) 100%
+  );
+}
+
+.gray-button .button-82-front {
+  background: hsl(0deg 0% 50%); /* Gris medio */
+  color: #fff;
+}

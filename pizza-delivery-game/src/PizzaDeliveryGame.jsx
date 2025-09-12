@@ -38,9 +38,11 @@ const initialScores = TEAMS.reduce((acc, team) => {
   return acc;
 }, {});
 
-const generateDeliveries = (count, existing = [], teamPositions = {}) => {
+const generateDeliveries = (count, existing = [], teamPositions = {}, obstacles = []) => {
   const deliveries = [...existing];
-  while (deliveries.length < count) {
+  let attempts = 0;
+  while (deliveries.length < count && attempts < 100) {
+    attempts++;
     const row = Math.floor(Math.random() * BOARD_SIZE);
     const col = Math.floor(Math.random() * BOARD_SIZE);
     const occupied = deliveries.some((d) => d.row === row && d.col === col);
@@ -48,12 +50,17 @@ const generateDeliveries = (count, existing = [], teamPositions = {}) => {
     const occupiedByTeam = Object.values(teamPositions).some(
       (pos) => pos.row === row && pos.col === col
     );
-    if (!occupied && !isCenter && !occupiedByTeam) {
+    const occupiedByObstacle = obstacles.some(
+      (o) => o.row === row && o.col === col
+    );
+
+    if (!occupied && !isCenter && !occupiedByTeam && !occupiedByObstacle) {
       deliveries.push({ row, col });
     }
   }
   return deliveries;
 };
+
 
 const generateRandomObstaclePosition = (deliveries, obstacles, teamPositions) => {
   let row, col;
@@ -81,10 +88,13 @@ const PizzaDeliveryGame = () => {
   const [obstacles, setObstacles] = useState([]);
   const [deliveriesCompleted, setDeliveriesCompleted] = useState(0);
 
-  const [powerUps, setPowerUps] = useState([]);
+  const [powerUps, setPowerUps] = useState([]); 
   const [moveCount, setMoveCount] = useState(0);
   const [boostedTeams, setBoostedTeams] = useState({});
-  
+  const [placingBanana, setPlacingBanana] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
@@ -178,78 +188,125 @@ const PizzaDeliveryGame = () => {
   const currentTeam = selectedTeam;
 
   const handleCellClick = (row, col) => {
-    if (!canMove) return;
-    if (!currentTeam) return; // no seleccionado aún
-
-    const position = teamPositions[currentTeam];
-    if (!position) return;
-
-
+    // Si estamos en modo de colocar obstáculo tras comer banana
+    if (placingBanana) {
+      const bananaTeam = placingBanana.team;
+  
+      // Solo colocar hoyo si está pendiente
+      if (placingBanana.pending) {
+        const occupied =
+          deliveries.some((d) => d.row === row && d.col === col) ||
+          obstacles.some((o) => o.row === row && o.col === col) ||
+          Object.values(teamPositions).some((pos) => pos.row === row && pos.col === col);
+  
+        if (!occupied) {
+          setObstacles((prev) => [...prev, { row, col, type: "bananaObstacle" }]);
+          // Ya no está pendiente, ahora puede moverse normalmente
+          setPlacingBanana(null); 
+          // activar movimiento normal del equipo que comió la banana
+          setSelectedTeam(bananaTeam);
+          setCanMove(false);
+        }
+        return; // salir para que no haga nada más
+      }
+    }
+    
+    
+    
+    
+  
+    if (!canMove || !currentTeam) return;
+  
     const { row: currentRow, col: currentCol } = teamPositions[currentTeam];
-
     const range = boostedTeams[currentTeam] ? 2 : 1;
-
+  
     const isValidMove =
       Math.abs(currentRow - row) <= range &&
       Math.abs(currentCol - col) <= range &&
       !(currentRow === row && currentCol === col);
-
-
-
-    if (!isValidMove || (currentRow === row && currentCol === col)) return;
-
+  
+    if (!isValidMove) return;
+  
+    // Entrega y obstáculos normales
     const delivered = deliveries.find((d) => d.row === row && d.col === col);
-    const blocked = obstacles.some((o) => o.row === row && o.col === col);
+    const blocked = obstacles.some((o) => o.row === row && o.col === col && o.type !== "bananaObstacle");
     if (blocked) return;
-
-    const powerUpHere = powerUps.some((p) => p.row === row && p.col === col);
+  
+    // Power-up
+    const powerUpHere = powerUps.find((p) => p.row === row && p.col === col);
     if (powerUpHere) {
+      if (powerUpHere.type === "boost") {
+        setBoostedTeams((prev) => ({ ...prev, [currentTeam]: true }));
+      } else if (powerUpHere.type === "banana") {
+        setPlacingBanana({ team: currentTeam, pending: true });
+        setSelectedTeam(currentTeam); // seleccionar automáticamente
+        setCanMove(true);             // activar movimiento SOLO para colocar hoyo
+
+      }
+      // Remover power-up del tablero
       setPowerUps((prev) => prev.filter((p) => !(p.row === row && p.col === col)));
-      setBoostedTeams((prev) => ({ ...prev, [currentTeam]: true }));
     }
-
+  
+    // Mover jugador
     const newPosition = { row, col };
-
     setTeamPositions((prev) => ({
       ...prev,
       [currentTeam]: newPosition,
     }));
-
+  
+    // Revisar si cayó en un obstáculo especial (bananaObstacle)
+    const obstacle = obstacles.find((o) => o.row === row && o.col === col);
+    if (obstacle && obstacle.type === "bananaObstacle") {
+      setTeamScores((prev) => ({
+        ...prev,
+        [currentTeam]: Math.max(prev[currentTeam] - 1, 0),
+      }));
+      // Opcional: eliminar obstáculo
+      setObstacles((prev) => prev.filter((o) => o.row !== row || o.col !== col));
+    }
+  
+    // Recolectar entrega si aplica
     if (delivered) {
       setTeamScores((prev) => ({
         ...prev,
         [currentTeam]: prev[currentTeam] + 1,
       }));
-
       setDeliveriesCompleted((prev) => prev + 1);
-
+  
       setDeliveries((prev) => {
         const updated = prev.filter((d) => !(d.row === row && d.col === col));
-        return generateDeliveries(5, updated, {
-          ...teamPositions,
-          [currentTeam]: newPosition,
-        });
+        return generateDeliveries(5, updated, { ...teamPositions, [currentTeam]: newPosition }, obstacles);
       });
+      
     }
-
+  
     setMoveCount((prev) => prev + 1);
-
+  
+    // Resetear turno
     setCanMove(false);
-    /*     setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);*/
     setSelectedTeam(null);
     setCurrentQuestionIndex((prev) => prev + 1);
-
+  
     if (boostedTeams[currentTeam]) {
       setBoostedTeams((prev) => ({ ...prev, [currentTeam]: false }));
     }
-
   };
+  
+  const [selectedOption, setSelectedOption] = useState(null);
 
-  const handleMultipleChoice = (selected) => {
+const handleMultipleChoice = (selected) => {
+  setSelectedOption(selected); // ← guardar opción para mostrar selección
+  const current = questions[currentQuestionIndex];
+  const isCorrect = selected === current.correctAnswer;
+  confirmAnswer(isCorrect);
+};
+
+
+  /* const handleMultipleChoice = (selected) => {
     const current = questions[currentQuestionIndex];
     const isCorrect = selected === current.correctAnswer;
     confirmAnswer(isCorrect);
-  };
+  }; */
 
   const handleTeamNameClick = (team) => {
     if (!canMove) {
@@ -260,7 +317,8 @@ const PizzaDeliveryGame = () => {
   const confirmAnswer = (isCorrect) => {
     if (isCorrect) {
       if (!selectedTeam) {
-        alert("Por favor, selecciona un equipo antes de mover.");
+        setMessageText("⚠️ Por favor, selecciona un equipo antes de mover.");
+        setShowMessageModal(true);
         return;
       }
       setCanMove(true);
@@ -293,7 +351,11 @@ const PizzaDeliveryGame = () => {
           newCol < BOARD_SIZE
         ) {
           // Evita obstáculos
-          if (!obstacles.some((o) => o.row === newRow && o.col === newCol)) {
+          const blocked = obstacles.some(
+            (o) => o.row === newRow && o.col === newCol && o.type !== "bananaObstacle"
+          );
+  
+          if (!blocked) {
             moves.push({ row: newRow, col: newCol });
           }
         }
@@ -319,51 +381,76 @@ const PizzaDeliveryGame = () => {
       deliveries.some((d) => d.row === newRow && d.col === newCol) ||
       obstacles.some((o) => o.row === newRow && o.col === newCol) ||
       powerUps.some((p) => p.row === newRow && p.col === newCol) ||
-      Object.values(teamPositions).some((pos) => pos.row === newRow && pos.col === newCol) // evita jugadores
-
+      Object.values(teamPositions).some((pos) => pos.row === newRow && pos.col === newCol) // evita que esté sobre un jugador
     );
   
-    setPowerUps((prev) => [...prev, { row: newRow, col: newCol }]);
+    // Elegir tipo de power-up
+    const type = Math.random() < 0.7 ? "boost" : "banana"; // 70% boost, 30% banana
+  
+    setPowerUps((prev) => [...prev, { row: newRow, col: newCol, type }]);
   };
+  
 
   const renderCell = (row, col) => {
-    const powerUpHere = powerUps.some((p) => p.row === row && p.col === col);
+    const powerUpHere = powerUps.find((p) => p.row === row && p.col === col);
     const deliveryHere = deliveries.some((d) => d.row === row && d.col === col);
-    const obstacleHere = obstacles.some((o) => o.row === row && o.col === col);
+    const obstacleHere = obstacles.find((o) => o.row === row && o.col === col);
     const teamHere = TEAMS.find(
-      (team) =>
-        teamPositions[team].row === row && teamPositions[team].col === col
+      (team) => teamPositions[team].row === row && teamPositions[team].col === col
     );
-    const validMoves = canMove && currentTeam ? getValidMoves(currentTeam) : [];
-    const isValidMoveCell = validMoves.some(
-      (pos) => pos.row === row && pos.col === col
-    );
+  
+    const validMoves =
+  currentTeam && canMove ? getValidMoves(currentTeam) : [];
+const isValidMoveCell = validMoves.some(
+  (pos) => pos.row === row && pos.col === col
+);
 
+    // --- CLASES ---
     const classNames = ["cell"];
-    if (deliveryHere) classNames.push("delivery");
-    if (obstacleHere) classNames.push("obstacle");
+  
+    if (deliveryHere) {
+      classNames.push("delivery");
+    } else if (obstacleHere) {
+      if (obstacleHere.type !== "bananaObstacle") classNames.push("obstacle");
+    }
+  
     if (teamHere) classNames.push(teamColors[teamHere]);
     if (isValidMoveCell) classNames.push("highlight");
-
+  
+    // --- CONTENIDO VISUAL ---
+    let content = "";
+    if (deliveryHere) content = "🍕";
+    else if (obstacleHere) {
+      content = obstacleHere.type === "bananaObstacle" ? "🕳️" : "🧱";
+    } else if (powerUpHere) {
+      content = powerUpHere.type === "boost" ? "⚡" : "🚧";
+    }
+  
+    // --- TITLE (TOOLTIP) ---
+    let title = "";
+    if (deliveryHere) title = "Entrega aquí 🍕";
+    else if (obstacleHere) {
+      title =
+        obstacleHere.type === "bananaObstacle"
+          ? "Hoyo 🕳️ - Quita 1 punto al pasar"
+          : "Obstáculo 🧱 - Bloquea movimiento";
+    } else if (powerUpHere) {
+      title = powerUpHere.type === "boost" ? "Velocidad ⚡" : "Banana 🚧";
+    }
+  
     return (
       <div
         key={`${row}-${col}`}
         className={classNames.join(" ")}
         onClick={() => handleCellClick(row, col)}
         style={teamHere ? { backgroundColor: teamColors[teamHere] } : {}}
-        title={
-          deliveryHere
-            ? "Entrega aquí 🍕"
-            : obstacleHere
-            ? "Obstáculo 🧱"
-            : ""
-        }
+        title={title}
       >
-        {/* {deliveryHere ? "🍕" : obstacleHere ? "🧱" : teamHere ? "🚗" : ""} */}
-        {deliveryHere ? "🍕" : obstacleHere ? "🧱" : powerUpHere ? "⚡" : ""}
+        {content}
       </div>
     );
   };
+  
 
 
   
@@ -396,13 +483,18 @@ const PizzaDeliveryGame = () => {
   const reiniciarJuego = () => {
     setTeamPositions(initialTeamPositions);
     setTeamScores(initialScores);
-    setDeliveries(generateDeliveries(5, [], initialTeamPositions));
-    /* setCurrentTurnIndex(0); */
+    setDeliveries(generateDeliveries(5, [], initialTeamPositions, []));
+    setObstacles([]);      // reinicia los obstáculos
+    setPowerUps([]);       // reinicia los power-ups
     setSelectedTeam(null);
     setCurrentQuestionIndex(0);
     setCanMove(false);
     setRevealedAnswers({});
+    setBoostedTeams({});
+    setMoveCount(0);
+    setPlacingBanana(null);
   };
+  
   
   // refs y estado para medir celdas / etiquetas
 const boardRef = useRef(null);
@@ -560,6 +652,45 @@ useEffect(() => {
     </div>
   ))}
 
+  {/* Botón para abrir instrucciones */}
+  <div className="instructions-btn">
+        <button
+          className="button-82-pushable orange-button"
+          role="button"
+          onClick={() => setShowInstructions(true)}
+        >
+          <span className="button-82-shadow"></span>
+          <span className="button-82-edge"></span>
+          <span className="button-82-front text">📖 Instrucciones</span>
+        </button>
+      </div>
+
+        {/* Modal de Instrucciones */}
+      {showInstructions && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Reglas del Juego</h2>
+            <ul>
+              <li>🍕 Los equipos deben comer pizzas para no quedarse con hambre.</li>
+              <li>✅ Si respondes correctamente, tu equipo puede moverse.</li>
+              <li>❌ Si fallas, pierdes el turno.</li>
+              <li>⚡ El rayo te permite moverte una celda extra en tu siguiente turno.</li>
+              <li>🚧 La señal de obras te permite colocar inmediatamente un bache en cualquier celda vacia.</li>
+              <li>🧱 Los obstáculos bloquean el paso.</li>
+              <li>El equipo con la mayor puntuación una vez terminadas las preguntas ¡gana! 🏆</li>
+            </ul>
+            <button
+              className="button-82-pushable gray-button"
+              onClick={() => setShowInstructions(false)}
+            >
+              <span className="button-82-shadow"></span>
+              <span className="button-82-edge"></span>
+              <span className="button-82-front text">Cerrar</span>
+            </button>
+          </div>
+        </div>
+      )}
+
   {/* Capa de jugadores (posicionada dinámicamente) */}
   <div
     className="players-layer"
@@ -636,6 +767,9 @@ useEffect(() => {
       />
       <label htmlFor={`team-${team}`}>Nombre del equipo</label>
     </div>
+
+    
+
 
     <div className="color-picker-wrapper" style={{ position: "relative" }}>
       <button
@@ -716,8 +850,16 @@ useEffect(() => {
               <h3>Modo Libre (Tutorial)</h3>
               <p>Puedes mover tu equipo libremente usando los botones.</p>
               <div className="controls">
-                <button onClick={() => confirmAnswer(true)}>✔ Sí</button>
-                <button onClick={() => confirmAnswer(false)}>✘ No</button>
+              <button className="button-82-pushable green-button" role="button" onClick={() => confirmAnswer(true)}>
+                <span className="button-82-shadow"></span>
+                <span className="button-82-edge"></span>
+                <span className="button-82-front text">✔ Sí</span>
+              </button>
+              <button className="button-82-pushable" role="button" onClick={() => confirmAnswer(false)}>
+                <span className="button-82-shadow"></span>
+                <span className="button-82-edge"></span>
+                <span className="button-82-front text">✘ No</span>
+              </button>
               </div>
             </>
           ) : (
@@ -728,9 +870,15 @@ useEffect(() => {
               {questions[currentQuestionIndex]?.type === "mc" ? (
                 <div className="options">
                   {questions[currentQuestionIndex]?.options.map((opt, idx) => (
-                    <button key={idx} onClick={() => handleMultipleChoice(opt)}>
-                      {opt}
-                    </button>
+                    <button
+                    key={idx}
+                    className={`button-82-pushable ${selectedOption === opt ? "selected" : ""}`}
+                    onClick={() => handleMultipleChoice(opt)}
+                  >
+                    <span className="button-82-shadow"></span>
+                    <span className="button-82-edge"></span>
+                    <span className="button-82-front text">{opt}</span>
+                  </button>
                   ))}
                 </div>
               ) : (
@@ -782,6 +930,40 @@ useEffect(() => {
           )}
         </div>
       )}
+
+{placingBanana && (
+  <div
+    className="alert-modal floating-message"
+    role="alert"
+    aria-live="polite"
+  >
+    <h3>⚠️ Turno especial</h3>
+    <p>
+      {teamNames[placingBanana.team]}, elige una celda vacía para colocar un
+      bache 🕳️. Esto hará que el próximo jugador que caiga ahí pierda 1 punto.
+    </p>
+    <p>Después de colocar el bache, el juego continuará normalmente.</p>
+  </div>
+)}
+
+
+
+{showMessageModal && (
+  <div className="modal-backdrop" onClick={() => setShowMessageModal(false)}>
+    <div
+      className="modal-content"
+      onClick={(e) => e.stopPropagation()} // evita que se cierre al hacer click dentro
+      role="alertdialog"
+      aria-modal="true"
+    >
+      <p>{messageText}</p>
+      <button className="close-modal" onClick={() => setShowMessageModal(false)}>
+        Cerrar
+      </button>
+    </div>
+  </div>
+)}
+
 
       {!modoLibre &&
         questions.length > 0 &&

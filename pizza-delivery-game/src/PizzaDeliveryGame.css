@@ -6,17 +6,17 @@ html, body {
 #root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* altura completa de la ventana */
+  min-height: 100vh;
 }
 
 .game-container {
-  flex: 1; /* ocupa todo el espacio entre header y footer */
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
   font-family: sans-serif;
-  padding-top: 60px; /* altura de tu header */
+  padding-top: 60px;
   width: 100%;
 }
 
@@ -118,9 +118,9 @@ html, body {
   }
   
   .modal-content {
-    position: fixed;  /* <- agrega esto */
-    top: 50%;         /* centrado vertical */
-    left: 50%;        /* centrado horizontal */
+    position: fixed;
+    top: 50%; 
+    left: 50%;     
     transform: translate(-50%, -50%);
     background: white;
     padding: 20px 30px;
@@ -128,7 +128,7 @@ html, body {
     max-width: 400px;
     width: 90%;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    z-index: 1001;    /* <- que esté encima del backdrop */
+    z-index: 1001;
   }
   
   .modal-content h3 {
@@ -141,16 +141,85 @@ html, body {
   
   .modal-float {
     position: absolute;
-    top: 80px; /* debajo del título */
+    top: 80px;
     right: 20px;
-    width: 300px;
+  
+    width: 350px;
+    max-width: 95vw;
+  
+    max-height: 85vh;
+    overflow-y: auto;
+  
+    padding: 20px;
     background: white;
-    border: 2px solid #ccc;
-    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  
     z-index: 10;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
+  
+  
+
+  /* Para pantallas bajas o móviles verticales */
+@media (max-height: 700px) {
+  .modal-float {
+    top: 20px !important;     /* Baja el modal */
+    right: 10px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    padding: 16px;
+  }
+}
+
+/* Para pantallas muy pequeñas (móviles) */
+@media (max-width: 600px) {
+  .modal-float {
+    top: 10px !important;
+    right: 5px !important;
+    left: 5px !important;   /* Centra y expande */
+    width: auto !important;
+    max-width: none !important;
+    max-height: 88vh !important;
+  }
+}
+
+
+  @media (max-width: 800px) {
+    .modal-float {
+      max-width: 95vw;
+      max-height: 85vh;
+      font-size: 1.1rem;  
+    }
+  }
+  
+
+  .modal-float h3 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    color: #ff7b00;
+  }
+  
+  .modal-float p {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+  
+  .modal-float .controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .modal-float .options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  
   
   .modal-float h3 {
     margin-top: 0;
@@ -340,14 +409,15 @@ html, body {
 }
 
 .board-container {
-  display: flex;
+  display: relative;
   flex-direction: column;
   align-items: center;
+  margin-right: 150px;
 }
 
 .column-labels {
   display: flex;
-  margin-left: 40px; /* ancho del número izquierdo */
+  margin-left: 40px;
   margin-bottom: 5px;
 }
 
@@ -382,6 +452,24 @@ html, body {
   gap: 16px;
 }
 
+.col-label,
+.row-label {
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.board .cell {
+  width: 70px;
+  height: 70px;
+  font-size: 2rem;
+}
+
+.modal-overlay {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+
 .obstacle {
   background-color: #fff;
   color: white;
@@ -396,6 +484,7 @@ body, html {
   padding: 0;
   height: 100%;
   font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
 }
 
 #root {
@@ -527,6 +616,12 @@ body, html {
   background: hsl(145deg 100% 40%);
 }
 
+.modal-float .button-30 {
+  display: block;
+  margin: 16px auto;
+}
+
+
 /*Botón Mostrar Respuesta*/
 .button-30 {
   align-items: center;
@@ -558,7 +653,7 @@ body, html {
   touch-action: manipulation;
   white-space: nowrap;
   will-change: box-shadow, transform;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .button-30:focus {
@@ -623,7 +718,7 @@ body, html {
   text-align: center;
   padding: 20px 0;
   width: 100%;
-  margin-top: auto; /* empuja el footer hacia abajo si hay espacio */
+  margin-top: auto; 
 }
 
 
@@ -634,14 +729,14 @@ body, html {
 }
 
 .footer-custom li {
-  font-size: 0.875rem; /* equivalente a text-sm */
+  font-size: 0.875rem; 
   margin-bottom: 4px;
 }
 
 .header {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* dejamos el logo a la izquierda */
+  justify-content: flex-start;
   background-color: #f90;
   color: white;
   padding: 0.5rem 1rem;
@@ -659,7 +754,7 @@ body, html {
 
 .header-content {
   flex: 1;
-  position: relative; /* necesario para centrar el título absoluto */
+  position: relative;
 }
 
 .header-title {
@@ -668,9 +763,9 @@ body, html {
   font-weight: bold;
   color: white;
   
-  /* centrado absoluto */
   position: absolute;
   left: 50%;
+  top: 50%;
   transform: translateX(-50%);
   text-align: center;
 }
@@ -920,4 +1015,8 @@ body, html {
 .gray-button .button-82-front {
   background: hsl(0deg 0% 50%); /* Gris medio */
   color: #fff;
+}
+
+.respuesta{
+  color: #ff7b00;
 }

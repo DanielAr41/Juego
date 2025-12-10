@@ -896,7 +896,7 @@ useEffect(() => {
                    {/* Si ya se reveló, muestro la respuesta */}
     {revealedAnswers[currentQuestionIndex] && (
       <p>
-        <strong>Respuesta:</strong>{" "}
+        <strong className="respuesta">Respuesta:</strong>{" "}
         {questions[currentQuestionIndex]?.answer}
       </p>
     )}

@@ -144,7 +144,7 @@ html, body {
     top: 80px;
     right: 20px;
   
-    width: 350px;
+    width: 550px;
     max-width: 95vw;
   
     max-height: 85vh;
@@ -163,7 +163,7 @@ html, body {
   /* Para pantallas bajas o móviles verticales */
 @media (max-height: 700px) {
   .modal-float {
-    top: 20px !important;     /* Baja el modal */
+    top: 20px !important;   
     right: 10px !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
@@ -176,7 +176,7 @@ html, body {
   .modal-float {
     top: 10px !important;
     right: 5px !important;
-    left: 5px !important;   /* Centra y expande */
+    left: 5px !important; 
     width: auto !important;
     max-width: none !important;
     max-height: 88vh !important;
@@ -194,16 +194,19 @@ html, body {
   
 
   .modal-float h3 {
-    font-size: 1.8rem;
+    font-size: 2.8rem;
     font-weight: 800;
     text-align: center;
     color: #ff7b00;
+    margin-top: 0;
   }
   
   .modal-float p {
-    font-size: 1.1rem;
+    font-size: 2.5rem;
     margin-bottom: 16px;
     line-height: 1.4;
+    font-weight: 800;
+    text-align: center;
   }
   
   .modal-float .controls {
@@ -219,14 +222,6 @@ html, body {
     gap: 14px;
   }
   
-  
-  
-  .modal-float h3 {
-    margin-top: 0;
-  }
-  
-
-
   .main-game {
     display: flex;
     align-items: flex-start;

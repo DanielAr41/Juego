@@ -4,7 +4,7 @@ import PizzaDeliveryGame from './PizzaDeliveryGame';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/pizza-game/">
     <Routes>
       <Route path="/:id" element={<PizzaDeliveryGame />} />
       <Route path="/" element={<PizzaDeliveryGame />} />

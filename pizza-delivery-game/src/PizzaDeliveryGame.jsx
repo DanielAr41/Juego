@@ -626,7 +626,11 @@ useEffect(() => {
               </li>
             ))}
           </ul>
-        </div>
+          {/* Botón icono engranaje */}
+          <button className="config-button" onClick={() => setShowConfig(true)} aria-label="Abrir configuración">
+                ⚙️
+              </button>
+          </div>
 
         <div className="board-and-config">
           <div className="board-container">
@@ -724,10 +728,7 @@ useEffect(() => {
 </div>
 
           </div>
-              {/* Botón icono engranaje */}
-              <button className="config-button" onClick={() => setShowConfig(true)} aria-label="Abrir configuración">
-                ⚙️
-              </button>
+              
         </div>
       </div>
 

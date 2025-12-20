@@ -95,6 +95,8 @@ const PizzaDeliveryGame = () => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [boostNotice, setBoostNotice] = useState(null);
+
 
   const handleShowAnswer = (index) => {
     setRevealedAnswers((prev) => ({ ...prev, [index]: true }));
@@ -237,6 +239,10 @@ const PizzaDeliveryGame = () => {
     if (powerUpHere) {
       if (powerUpHere.type === "boost") {
         setBoostedTeams((prev) => ({ ...prev, [currentTeam]: true }));
+
+        setBoostNotice({ team: currentTeam });
+        setTimeout(() => setBoostNotice(null), 7000);
+
       } else if (powerUpHere.type === "banana") {
         setPlacingBanana({ team: currentTeam, pending: true });
         setSelectedTeam(currentTeam); // seleccionar automáticamente
@@ -289,6 +295,7 @@ const PizzaDeliveryGame = () => {
   
     if (boostedTeams[currentTeam]) {
       setBoostedTeams((prev) => ({ ...prev, [currentTeam]: false }));
+      //setBoostNotice(null);
     }
   };
   
@@ -947,6 +954,20 @@ useEffect(() => {
   </div>
 )}
 
+{boostNotice && (
+  <div
+    className="alert-modal floating-message"
+    role="alert"
+    aria-live="polite"
+  >
+    <h3>⚡ Power-up activado</h3>
+    <p>
+      {teamNames[boostNotice.team]} podrá moverse
+      <strong> una casilla extra </strong>
+      en su siguiente turno.
+    </p>
+  </div>
+)}
 
 
 {showMessageModal && (

@@ -308,13 +308,6 @@ const handleMultipleChoice = (selected) => {
   confirmAnswer(isCorrect);
 };
 
-
-  /* const handleMultipleChoice = (selected) => {
-    const current = questions[currentQuestionIndex];
-    const isCorrect = selected === current.correctAnswer;
-    confirmAnswer(isCorrect);
-  }; */
-
   const handleTeamNameClick = (team) => {
     if (!canMove) {
       setSelectedTeam(team);
@@ -330,11 +323,25 @@ const handleMultipleChoice = (selected) => {
       }
       setCanMove(true);
     } else {
-      /* setCurrentTurnIndex((prev) => (prev + 1) % TEAMS.length);
-      setCurrentQuestionIndex((prev) => prev + 1); */
+      if (questions.length > currentQuestionIndex + 1) {
+        setQuestions((prevQuestions) => {
+          const newQuestions = [...prevQuestions];
+          const currentQuestion = newQuestions[currentQuestionIndex];
+          
+          const remainingCount = newQuestions.length - (currentQuestionIndex + 1);
+          const randomIndex = currentQuestionIndex + 1 + Math.floor(Math.random() * remainingCount);
+          
+          newQuestions[currentQuestionIndex] = newQuestions[randomIndex];
+          newQuestions[randomIndex] = currentQuestion;
+          
+          return newQuestions;
+        });
+  
+        setRevealedAnswers((prev) => ({ ...prev, [currentQuestionIndex]: false }));
+        setSelectedOption(null);
+      } 
+
       setSelectedTeam(null);
-      //setCurrentQuestionIndex((prev) => prev + 1);
-      //setCurrentQuestionIndex(null);
     }
   };
 
@@ -379,6 +386,36 @@ const handleMultipleChoice = (selected) => {
     }
   }, [moveCount]);
   
+
+useEffect(() => {
+  const handleKeyDown = (event) => {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    const keyMap = {
+      "1": TEAMS[0],
+      "2": TEAMS[1],
+      "3": TEAMS[2],
+      "4": TEAMS[3],
+    };
+
+    const teamToSelect = keyMap[event.key];
+
+    if (teamToSelect) {
+      if (!canMove) {
+        setSelectedTeam(teamToSelect);
+      }
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [canMove]); // Se actualiza si cambia la posibilidad de mover
+
   const spawnPowerUp = () => {
     let newRow, newCol;
     do {
